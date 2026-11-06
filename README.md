@@ -1,4 +1,4 @@
-# Embudo chat · Círculo de Importadores
+# Embudo chat · Juan Importa
 
 Vista previa del embudo tipo chat (diagnóstico → VSL → calificación → agenda).
 
