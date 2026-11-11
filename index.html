@@ -152,17 +152,17 @@
 #ci-funnel .ci-cine-video .ci-media{min-height:210px}
 #ci-funnel .ci-cine-video .ci-media.vert{flex:1;min-height:0;width:auto;max-width:100%}
 /* pantalla del video personalizada (rutas) */
-#ci-funnel .ci-cine-video.ruta{overflow-y:auto;-webkit-overflow-scrolling:touch;justify-content:flex-start;padding:6px 0 10px}
+#ci-funnel .ci-cine-video.ruta{overflow-y:auto;-webkit-overflow-scrolling:touch;justify-content:flex-start;padding:2px 0 8px;gap:10px}
 #ci-funnel .ci-cine-video.ruta>*{flex:none}
 #ci-funnel .ci-cine-video.ruta .ci-media.vert{flex:none;height:70vh}
 #ci-funnel .ci-cine-video>.ci-cine-chip{width:auto;align-self:center}
-#ci-funnel .ci-cine-chip{background:rgba(255,255,255,.12);color:#fff;font-size:12.5px;line-height:1.3;padding:6px 12px;border-radius:999px;text-align:center}
+#ci-funnel .ci-cine-chip{background:rgba(255,255,255,.12);color:#fff;font-size:12px;line-height:1.3;padding:5px 12px;margin:0 12px;border-radius:999px;text-align:center}
 #ci-funnel .ci-cine-chip b{color:var(--ci-a)}
-#ci-funnel .ci-cine-msg{color:#fff;font-weight:800;font-size:20px;line-height:1.25;text-align:center;padding:0 18px;max-width:640px}
-#ci-funnel .ci-cine-sub{color:rgba(255,255,255,.8);font-size:15px;line-height:1.4;text-align:center;padding:0 18px;max-width:640px}
+#ci-funnel .ci-cine-msg{color:#fff;font-weight:800;font-size:18px;line-height:1.25;text-align:center;padding:0 18px;max-width:640px}
+#ci-funnel .ci-cine-sub{color:rgba(255,255,255,.8);font-size:14px;line-height:1.35;text-align:center;padding:0 18px;max-width:640px}
 #ci-funnel .ci-cine-video>.ci-cine-nota{width:calc(100% - 28px);max-width:560px}
-#ci-funnel .ci-cine-nota{background:#fdf3d7;color:#1d2327;font-size:14.5px;line-height:1.45;padding:12px 14px;border-radius:10px}
-#ci-funnel .ci-cine-nota i{display:block;margin-top:6px;font-style:normal;font-weight:700}
+#ci-funnel .ci-cine-nota{background:#fdf3d7;color:#1d2327;font-size:14px;line-height:1.4;padding:10px 12px;border-radius:10px}
+#ci-funnel .ci-cine-nota i{display:block;margin-top:4px;font-style:normal;font-weight:700}
 #ci-funnel .ci-cine-title{color:#fff;font-weight:700;font-size:18px;line-height:1.3;text-align:center;padding:0 18px;max-width:640px}
 #ci-funnel .ci-cine-cta{flex:none;padding:12px 16px 4px;display:flex;flex-direction:column;align-items:center;gap:8px}
 #ci-funnel .ci-cine-cta:empty{display:none}
@@ -295,18 +295,25 @@ var CONFIG = {
   video: { plataforma: "youtube", id: "RlVAk1MWDeA", src: "", vertical: false },
 
   // ===== RUTAS: pantalla del video personalizada =====
-  //  La ruta sale de la respuesta a la pregunta "etapa". Si cambias el texto de una opción, cámbialo también aquí (igualito).
+  //  La ruta sale del índice del diagnóstico (rutaPorIndice): de 1 a 49 = A, de 50 a 100 = B.
+  //  Si borras rutaPorIndice, la ruta sale de la respuesta a "etapa" (rutaPorEtapa). Si cambias el texto de una opción, cámbialo también ahí (igualito).
   //  En los textos puedes usar {nombre}, {perfil} (ej. "Importador en Exploración") e {indice} (de 20 a 92).
   //  notas: una por cada opción de la pregunta "freno", con el mismo texto exacto de la opción. Va encima del video.
   //  mensaje: un texto para todos, o uno por cada respuesta de "etapa" (como en la ruta B).
+  rutaPorIndice: [ { hasta: 49, ruta: "A" }, { hasta: 100, ruta: "B" } ],
   rutaPorEtapa: { "Nunca he importado": "A", "Compro aquí y revendo": "B", "Ya importé alguna vez": "B", "Importo con frecuencia": "B" },
   firmaNota: "— Juan",
   rutas: {
     A: {   // Empiezas desde cero · VSL 2 (empleados que buscan ingreso extra)
-      video: { plataforma: "youtube", id: "FJ8Py1vWWKs", src: "", vertical: false },
+      video: { plataforma: "vturb", id: "6af3b5f98e9bfd5d7fb95a0e" },   // VSL 2 en VTurb (en YouTube: FJ8Py1vWWKs)
       agenda: "",                 // calendario de esta ruta. Vacío = usa agenda.url
       barra: "Tu diagnóstico: <b>{perfil}</b> · Índice {indice}/100",
-      mensaje: "{nombre}, como apenas estás empezando, este video lo grabé para ti.",
+      mensaje: {   // con el índice, a la ruta A también llegan quienes revenden o ya importaron pero tienen poca experiencia vendiendo
+        "Nunca he importado": "{nombre}, como apenas estás empezando, este video lo grabé para ti.",
+        "Compro aquí y revendo": "{nombre}, ya sabes vender. Lo que te falta es traer tu propio producto sin arriesgar tus ahorros. Este video lo grabé para ti.",
+        "Ya importé alguna vez": "{nombre}, ya importaste una vez. Ahora toca hacerlo con método para que se vuelva un ingreso constante. Este video lo grabé para ti.",
+        "Importo con frecuencia": "{nombre}, ya importas. Este video te muestra cómo convertirlo en un ingreso constante sin arriesgar de más."
+      },
       titular: "Cómo construir un ingreso extra importando productos desde China, mientras sigues en tu trabajo y sin arriesgar tus ahorros a ciegas.",
       notas: {
         "No sé qué producto traer": "Me dijiste que no sabes qué producto traer. En el video te explico por qué no se importa lo que a ti te gusta, sino lo que el mercado ya está comprando, y cómo nuestra IA te ayuda a encontrarlo antes de invertir.",
@@ -316,7 +323,7 @@ var CONFIG = {
       }
     },
     B: {   // Ya tienes un negocio · VSL 1 (dueños de negocio)
-      video: { plataforma: "youtube", id: "GXaWjo51dKA", src: "", vertical: false },
+      video: { plataforma: "vturb", id: "6af3b5f5cc1f366745aa231f" },   // VSL 1 en VTurb (en YouTube: GXaWjo51dKA)
       agenda: "",                 // calendario de esta ruta. Vacío = usa agenda.url
       barra: "Tu diagnóstico: <b>{perfil}</b> · Índice {indice}/100",
       mensaje: {
@@ -334,7 +341,7 @@ var CONFIG = {
     }
   },
 
-  vturbCuenta: "",                // solo si usas VTurb: el ID de tu cuenta (aparece en el código de inserción)
+  vturbCuenta: "1f152157-c4d8-4948-8e6c-8980de5de534",   // ID de la cuenta de VTurb (aparece en el código de inserción, después de converteai.net/)
   legal: "Los resultados dependen de cada persona, del producto y de su ejecución. Este diagnóstico es orientativo y no garantiza ingresos.",
 
   // BOTÓN debajo del VSL (lleva a la calificación)
@@ -595,7 +602,10 @@ function calcula(){
 // Decide la ruta (A o B) según la respuesta a "etapa" y la guarda en S.ruta
 function rutaActual(){
   if (!CONFIG.rutas) return null;
-  S.ruta = (CONFIG.rutaPorEtapa || {})[S.resp.etapa] || "";
+  if (CONFIG.rutaPorIndice && CONFIG.rutaPorIndice.length){
+    S.ruta = "";
+    for (var i = 0; i < CONFIG.rutaPorIndice.length; i++){ if (S.indice <= CONFIG.rutaPorIndice[i].hasta){ S.ruta = CONFIG.rutaPorIndice[i].ruta; break; } }
+  } else S.ruta = (CONFIG.rutaPorEtapa || {})[S.resp.etapa] || "";
   return (S.ruta && CONFIG.rutas[S.ruta]) || null;
 }
 function txr(s){ return tx(s || "").replace(/\{indice\}/g, S.indice); }
@@ -647,6 +657,7 @@ function media(m, avisoFalta){
     var box = document.createElement("div");
     var el = document.createElement("vturb-smartplayer");
     el.id = "vid-" + m.id; el.style.cssText = "display:block;margin:0 auto;width:100%;";
+    el.innerHTML = '<div class="vturb-player-placeholder" style="position:relative;width:100%;padding:' + (m.vertical ? "177.78%" : "56.25%") + ' 0 0;z-index:0;background-color:black;"></div>';
     box.appendChild(el);
     var s = document.createElement("script"); s.async = true;
     s.src = "https://scripts.converteai.net/" + CONFIG.vturbCuenta + "/players/" + m.id + "/v4/player.js";
