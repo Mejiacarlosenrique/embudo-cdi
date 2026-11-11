@@ -26,6 +26,8 @@ var COLUMNAS_EVENTOS = ["fecha", "evento", "sid", "nombre", "ruta", "utm_source"
 
 // Estos campos no se borran si un evento posterior llega vacío (ej. la fecha de registro)
 var FIJOS = { fecha_registro: 1 };
+// Estos campos se guardan siempre como texto
+var TEXTO = { telefono: 1, sid: 1 };
 
 function doPost(e) {
   var lock = LockService.getScriptLock();
@@ -54,7 +56,10 @@ function doPost(e) {
       if (k === "ultimo_evento") return d.evento || actual[i];
       var v = d[k];
       if (FIJOS[k] && actual[i]) return actual[i];
-      return v !== undefined && v !== "" ? v : actual[i];
+      var val = v !== undefined && v !== "" ? v : actual[i];
+      // El teléfono se guarda como texto (si no, Sheets le quita el "+" o lo vuelve número)
+      if (TEXTO[k] && val !== "") val = "'" + String(val).replace(/^'/, "");
+      return val;
     });
     if (fila) le.getRange(fila, 1, 1, cab.length).setValues([nueva]);
     else le.appendRow(nueva);
