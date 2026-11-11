@@ -20,17 +20,14 @@
   ?rapido=1  quita las pausas de "escribiendo..." para revisar textos rápido.
   ?prueba=1  responde todo solo, NO manda datos a ningún lado y no dispara el pixel.
 
-  GOOGLE SHEETS (opcional): crea una hoja, ve a Extensiones > Apps Script, pega esto,
-  y publícalo como "Aplicación web" con acceso "Cualquier persona". Copia la URL /exec en sheetsWebhook.
+  GOOGLE SHEETS: el código de la hoja está en el archivo apps-script-leads.gs (con sus instrucciones).
+  Publícalo como "Aplicación web" y pega la URL /exec en sheetsWebhook. La hoja tiene dos pestañas:
+  "Leads" (una fila por persona, con sus respuestas y UTMs) y "Eventos" (cada paso del embudo).
 
-    function doPost(e){
-      var d = JSON.parse(e.postData.contents);
-      var sh = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
-      var head = sh.getLastColumn() ? sh.getRange(1,1,1,sh.getLastColumn()).getValues()[0] : [];
-      Object.keys(d).forEach(function(k){ if(head.indexOf(k) < 0){ head.push(k); sh.getRange(1, head.length).setValue(k); } });
-      sh.appendRow(head.map(function(k){ return d[k] !== undefined ? d[k] : ""; }));
-      return ContentService.createTextOutput("ok");
-    }
+  UTMs: el embudo lee utm_source, utm_medium, utm_campaign, utm_content, utm_term, fbclid y gclid de la URL.
+  Si la persona vuelve después sin UTMs, se usan las de su primera visita (se guardan 30 días en su navegador).
+  En Meta, en el anuncio > "Parámetros de URL", pega:
+    utm_source=facebook&utm_medium=paid&utm_campaign={{campaign.name}}&utm_term={{adset.name}}&utm_content={{ad.name}}
 
   GHL (opcional): crea un Workflow con disparador "Inbound Webhook", copia su URL en ghlWebhook,
   y agrega la acción "Create/Update Contact" mapeando email, nombre y telefono.
@@ -298,7 +295,7 @@ var CONFIG = {
   //  La ruta sale del índice del diagnóstico (rutaPorIndice): de 1 a 49 = A, de 50 a 100 = B.
   //  Si borras rutaPorIndice, la ruta sale de la respuesta a "etapa" (rutaPorEtapa). Si cambias el texto de una opción, cámbialo también ahí (igualito).
   //  En los textos puedes usar {nombre}, {perfil} (ej. "Importador en Exploración") e {indice} (de 20 a 92).
-  //  notas: una por cada opción de la pregunta "freno", con el mismo texto exacto de la opción. Va encima del video.
+  //  notas: una por cada opción de la pregunta "freno", con el mismo texto exacto de la opción. Va debajo del video.
   //  mensaje: un texto para todos, o uno por cada respuesta de "etapa" (como en la ruta B).
   rutaPorIndice: [ { hasta: 49, ruta: "A" }, { hasta: 100, ruta: "B" } ],
   rutaPorEtapa: { "Nunca he importado": "A", "Compro aquí y revendo": "B", "Ya importé alguna vez": "B", "Importo con frecuencia": "B" },
@@ -439,6 +436,14 @@ var S = { resp: {}, op: {}, pts: 0, nombre: "", email: "", tel: "", indice: 0, p
 var UTM = {};
 (function(){ var p = new URLSearchParams(qs);
   ["utm_source","utm_medium","utm_campaign","utm_content","utm_term","fbclid","gclid","src","sck"].forEach(function(k){ var v = p.get(k); if (v) UTM[k] = v; });
+  // Si llega sin UTMs (ej. volvió escribiendo la dirección), usa las de su primera visita (30 días)
+  try {
+    if (Object.keys(UTM).length) localStorage.setItem("ci_utm", JSON.stringify({ t: Date.now(), u: UTM }));
+    else {
+      var g = JSON.parse(localStorage.getItem("ci_utm") || "null");
+      if (g && Date.now() - g.t < 30 * 864e5) UTM = g.u || {};
+    }
+  } catch(e){}
 })();
 
 /* ---------- apariencia ---------- */
@@ -771,10 +776,11 @@ function abreCine(){
     pieza("ci-cine-chip", txr(R.barra));
     pieza("ci-cine-msg", txr(porEtapa(R.mensaje)));
     pieza("ci-cine-sub", txr(R.titular));
-    var nota = (R.notas || {})[S.resp.freno];
-    if (nota) pieza("ci-cine-nota", txr(nota) + (CONFIG.firmaNota ? "<i>" + esc(CONFIG.firmaNota) + "</i>" : ""));
     var vid = R.video || CONFIG.video; vid.vsl = true;
     cont.appendChild(media(vid, "FALTA EL VIDEO DE VENTAS de la ruta " + S.ruta + ": configura CONFIG.rutas." + S.ruta + ".video"));
+    // La nota de Juan va debajo del video, antes del botón
+    var nota = (R.notas || {})[S.resp.freno];
+    if (nota) pieza("ci-cine-nota", txr(nota) + (CONFIG.firmaNota ? "<i>" + esc(CONFIG.firmaNota) + "</i>" : ""));
   } else {
     if (CONFIG.textos.tituloVideo){ var ti = document.createElement("div"); ti.className = "ci-cine-title"; ti.textContent = tx(CONFIG.textos.tituloVideo).replace(/&amp;/g, "&"); cont.appendChild(ti); }
     cont.appendChild(media(CONFIG.video, "FALTA EL VIDEO DE VENTAS: configura CONFIG.video"));
