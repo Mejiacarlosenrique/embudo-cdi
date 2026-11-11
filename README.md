@@ -1,6 +1,6 @@
 # Embudo chat · Juan Importa
 
-Vista previa del embudo tipo chat (diagnóstico → VSL → calificación → agenda).
+Vista previa del embudo tipo chat (diagnóstico → VSL según la ruta A o B → calificación → agenda).
 
 - `index.html`: página para verlo en el navegador (GitHub Pages).
 - `embudo-ghl.html`: el mismo embudo listo para pegar en un elemento "Custom JS / HTML" de GoHighLevel.

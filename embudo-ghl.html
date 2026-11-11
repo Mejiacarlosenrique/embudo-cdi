@@ -2,7 +2,10 @@
   EMBUDO CHAT · JUAN IMPORTA
   1) Diagnóstico tipo chat (preguntas + nombre, WhatsApp y correo) con resultado y puntaje.
   2) Testimonio y video de ventas (VSL) a pantalla completa.
-  3) Después del VSL: preguntas de calificación (las del Typeform). Si califica, va a la agenda;
+     La pantalla del video se personaliza por ruta (A = empieza desde cero, B = ya tiene negocio):
+     barra con su perfil e índice, mensaje con su nombre, titular, una nota según su freno y el VSL de su ruta.
+     Todo se edita en CONFIG > rutas.
+  3) Después del VSL: preguntas de calificación (las del Typeform). Si califica, va a la agenda de su ruta;
      si tiene menos de USD 1.000, lo manda al canal de YouTube.
 
   CÓMO USARLO EN GOHIGHLEVEL
@@ -31,7 +34,7 @@
   GHL (opcional): crea un Workflow con disparador "Inbound Webhook", copia su URL en ghlWebhook,
   y agrega la acción "Create/Update Contact" mapeando email, nombre y telefono.
   Eventos que llegan a GHL: "lead" (dejó sus datos), "calificado", "no_califica" y "agenda_click".
-  Usa el campo "evento" para poner etiquetas distintas a cada uno.
+  Cada evento trae el campo "ruta" (A o B). Usa "evento" y "ruta" para poner etiquetas distintas.
 -->
 <div id="ci-funnel">
   <div class="ci-app">
@@ -147,6 +150,18 @@
 #ci-funnel .ci-cine-video>*{width:100%;max-width:980px}
 #ci-funnel .ci-cine-video .ci-media{min-height:210px}
 #ci-funnel .ci-cine-video .ci-media.vert{flex:1;min-height:0;width:auto;max-width:100%}
+/* pantalla del video personalizada (rutas) */
+#ci-funnel .ci-cine-video.ruta{overflow-y:auto;-webkit-overflow-scrolling:touch;justify-content:flex-start;padding:6px 0 10px}
+#ci-funnel .ci-cine-video.ruta>*{flex:none}
+#ci-funnel .ci-cine-video.ruta .ci-media.vert{flex:none;height:70vh}
+#ci-funnel .ci-cine-video>.ci-cine-chip{width:auto;align-self:center}
+#ci-funnel .ci-cine-chip{background:rgba(255,255,255,.12);color:#fff;font-size:12.5px;line-height:1.3;padding:6px 12px;border-radius:999px;text-align:center}
+#ci-funnel .ci-cine-chip b{color:var(--ci-a)}
+#ci-funnel .ci-cine-msg{color:#fff;font-weight:800;font-size:20px;line-height:1.25;text-align:center;padding:0 18px;max-width:640px}
+#ci-funnel .ci-cine-sub{color:rgba(255,255,255,.8);font-size:15px;line-height:1.4;text-align:center;padding:0 18px;max-width:640px}
+#ci-funnel .ci-cine-video>.ci-cine-nota{width:calc(100% - 28px);max-width:560px}
+#ci-funnel .ci-cine-nota{background:#fdf3d7;color:#1d2327;font-size:14.5px;line-height:1.45;padding:12px 14px;border-radius:10px}
+#ci-funnel .ci-cine-nota i{display:block;margin-top:6px;font-style:normal;font-weight:700}
 #ci-funnel .ci-cine-title{color:#fff;font-weight:700;font-size:18px;line-height:1.3;text-align:center;padding:0 18px;max-width:640px}
 #ci-funnel .ci-cine-cta{flex:none;padding:12px 16px 4px;display:flex;flex-direction:column;align-items:center;gap:8px}
 #ci-funnel .ci-cine-cta:empty{display:none}
@@ -238,10 +253,10 @@ var CONFIG = {
     antesTestimonio: "Antes de mandarte el video, mira la historia de Pedro 👇",
     botonTestimonio: "Listo, ya lo vi. Sigamos",
     antesVideo: [
-      "Ahora sí, {nombre}. Te tengo un video con los primeros pasos para importar.",
+      "Ahora sí, {nombre}. Te preparé un video según tu diagnóstico.",
       "Solo una cosa: lo más importante está al final. ¿Lo vas a ver completo?"
     ],
-    tituloVideo: "Preparé este video para ti. En él te explico los primeros pasos para importar.",
+    tituloVideo: "Preparé este video para ti. En él te explico los primeros pasos para importar.",   // solo se usa si no hay rutas
     botonVideo: "Sí, lo veo completo",
     abriendoVideo: "Va. Te lo abro en pantalla completa 👇"
   },
@@ -275,7 +290,49 @@ var CONFIG = {
   ],
 
   // VIDEO DE VENTAS (VSL)
+  // "video" queda de respaldo: solo se usa si la persona no cae en ninguna ruta (o si borras "rutas").
   video: { plataforma: "youtube", id: "RlVAk1MWDeA", src: "", vertical: false },
+
+  // ===== RUTAS: pantalla del video personalizada =====
+  //  La ruta sale de la respuesta a la pregunta "etapa". Si cambias el texto de una opción, cámbialo también aquí (igualito).
+  //  En los textos puedes usar {nombre}, {perfil} (ej. "Importador en Exploración") e {indice} (de 20 a 92).
+  //  notas: una por cada opción de la pregunta "freno", con el mismo texto exacto de la opción. Va encima del video.
+  //  mensaje: un texto para todos, o uno por cada respuesta de "etapa" (como en la ruta B).
+  rutaPorEtapa: { "Nunca he importado": "A", "Compro aquí y revendo": "B", "Ya importé alguna vez": "B", "Importo con frecuencia": "B" },
+  firmaNota: "— Juan",
+  rutas: {
+    A: {   // Empiezas desde cero · VSL 2 (empleados que buscan ingreso extra)
+      video: { plataforma: "youtube", id: "FJ8Py1vWWKs", src: "", vertical: false },
+      agenda: "",                 // calendario de esta ruta. Vacío = usa agenda.url
+      barra: "Tu diagnóstico: <b>{perfil}</b> · Índice {indice}/100",
+      mensaje: "{nombre}, como apenas estás empezando, este video lo grabé para ti.",
+      titular: "Cómo construir un ingreso extra importando productos desde China, mientras sigues en tu trabajo y sin arriesgar tus ahorros a ciegas.",
+      notas: {
+        "No sé qué producto traer": "Me dijiste que no sabes qué producto traer. En el video te explico por qué no se importa lo que a ti te gusta, sino lo que el mercado ya está comprando, y cómo nuestra IA te ayuda a encontrarlo antes de invertir.",
+        "Miedo a que me estafen": "Me dijiste que te da miedo que te estafen. Johana sentía exactamente lo mismo. En el video te cuento cómo negoció con su proveedor, hizo su primera compra y la vendió, y por qué te damos una garantía por contrato.",
+        "Aduanas, aranceles y envíos": "Me dijiste que te frena la parte de aduanas, aranceles y envíos. En el video te muestro cómo calcular el costo real antes de comprar, y por qué vender mucho no sirve si no conoces ese número.",
+        "No sé cómo vender lo que traiga": "Me dijiste que no sabes cómo venderías lo que traigas. Importar es solo la mitad. En el video te muestro el sistema de ventas por internet con el que César hizo $3.000 en su primera campaña."
+      }
+    },
+    B: {   // Ya tienes un negocio · VSL 1 (dueños de negocio)
+      video: { plataforma: "youtube", id: "GXaWjo51dKA", src: "", vertical: false },
+      agenda: "",                 // calendario de esta ruta. Vacío = usa agenda.url
+      barra: "Tu diagnóstico: <b>{perfil}</b> · Índice {indice}/100",
+      mensaje: {
+        "Compro aquí y revendo": "{nombre}, ya tienes un negocio y ya sabes vender. Lo que te falta es dejar de entregarle tu margen a otro. Este video es para ti.",
+        "Ya importé alguna vez": "{nombre}, ya importaste, así que sabes que se puede. Ahora toca hacerlo con más margen y menos riesgo. Este video es para ti.",
+        "Importo con frecuencia": "{nombre}, ya importas. La conversación contigo es de margen, marca propia y escala. Este video es para ti."
+      },
+      titular: "Cómo pasar de revender productos de otros a tener tu propio producto importado desde China, con más margen y un sistema que venda aunque tú no estés.",
+      notas: {
+        "No sé qué producto traer": "Me dijiste que no sabes qué producto traer. Antes tenías que apostarle a la suerte; en el video te muestro cómo nuestra IA te dice qué productos tienen más potencial antes de que inviertas un solo peso.",
+        "Miedo a que me estafen": "Me dijiste que te da miedo que te estafen. Johana también tenía miedo de mandar dinero a China. En el video te cuento cómo hizo su primera importación y por qué la garantizamos por contrato.",
+        "Aduanas, aranceles y envíos": "Me dijiste que te frena la parte de aduanas, aranceles y envíos. En el video te muestro cómo saber exactamente cuánto te cuesta traer cada producto y dónde está tu importación en todo momento.",
+        "No sé cómo vender lo que traiga": "Me dijiste que no sabes cómo venderías lo que traigas. En el video te muestro cómo vender por internet sin depender del tráfico de tu local ni de que tú estés presente."
+      }
+    }
+  },
+
   vturbCuenta: "",                // solo si usas VTurb: el ID de tu cuenta (aparece en el código de inserción)
   legal: "Los resultados dependen de cada persona, del producto y de su ejecución. Este diagnóstico es orientativo y no garantiza ingresos.",
 
@@ -344,7 +401,7 @@ var CONFIG = {
 
   // AGENDA (a donde va quien califica)
   agenda: {
-    url: "PEGA_AQUI_EL_LINK_DE_LA_AGENDA",   // link de tu calendario de GHL (o Calendly)
+    url: "PEGA_AQUI_EL_LINK_DE_LA_AGENDA",   // link de tu calendario de GHL (o Calendly). Se usa si la ruta no tiene su propia agenda
     params: { email: "email", nombre: "first_name", telefono: "phone" }   // nombres para precargar datos (estos son los de GHL)
   },
   whatsappEquipo: "",             // número con indicativo, sin + ni espacios (ej. 573001234567). Vacío = no se muestra
@@ -370,7 +427,7 @@ var thread = $("ciThread"), inner = $("ciInner"), dock = $("ciDock"), prog = $("
 var P = CONFIG.preguntas;
 var CAL = CONFIG.calificacion && CONFIG.calificacion.activa ? CONFIG.calificacion.preguntas : [];
 var sid = "ci" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
-var S = { resp: {}, op: {}, pts: 0, nombre: "", email: "", tel: "", indice: 0, perfil: null, califica: "" };
+var S = { resp: {}, op: {}, pts: 0, nombre: "", email: "", tel: "", indice: 0, perfil: null, califica: "", ruta: "" };
 var UTM = {};
 (function(){ var p = new URLSearchParams(qs);
   ["utm_source","utm_medium","utm_campaign","utm_content","utm_term","fbclid","gclid","src","sck"].forEach(function(k){ var v = p.get(k); if (v) UTM[k] = v; });
@@ -533,6 +590,16 @@ function calcula(){
   perf.forEach(function(p){ if (S.indice >= p.min) S.perfil = p; });
 }
 
+/* ---------- rutas ---------- */
+// Decide la ruta (A o B) según la respuesta a "etapa" y la guarda en S.ruta
+function rutaActual(){
+  if (!CONFIG.rutas) return null;
+  S.ruta = (CONFIG.rutaPorEtapa || {})[S.resp.etapa] || "";
+  return (S.ruta && CONFIG.rutas[S.ruta]) || null;
+}
+function txr(s){ return tx(s || "").replace(/\{indice\}/g, S.indice); }
+function porEtapa(x){ return x && typeof x === "object" ? (x[S.resp.etapa] || "") : (x || ""); }
+
 /* ---------- piezas visuales ---------- */
 async function checklist(){
   var ul = document.createElement("ul"); ul.className = "ci-check";
@@ -605,7 +672,7 @@ function media(m, avisoFalta){
     var po = document.createElement("button"); po.type = "button"; po.className = "ci-poster"; po.setAttribute("aria-label", "Reproducir video");
     po.style.backgroundImage = "url('https://i.ytimg.com/vi/" + encodeURIComponent(m.id) + "/hqdefault.jpg')";
     po.innerHTML = '<span class="ci-play"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span>';
-    po.onclick = function(){ d.innerHTML = ""; d.appendChild(marco(true)); track("play"); enviar("play_" + (m === CONFIG.video ? "vsl" : "testimonio")); };
+    po.onclick = function(){ d.innerHTML = ""; d.appendChild(marco(true)); track("play"); enviar("play_" + (m === CONFIG.video || m.vsl ? "vsl" : "testimonio")); };
     d.appendChild(po); return d;
   }
   if (tipo === "mp4"){
@@ -629,7 +696,8 @@ function ir(url){ setTimeout(function(){ try { window.top.location.href = url; }
 
 /* ---------- agenda ---------- */
 function urlAgenda(){
-  var base = CONFIG.agenda.url || "";
+  var R = S.ruta && CONFIG.rutas ? CONFIG.rutas[S.ruta] : null;
+  var base = (R && R.agenda) || CONFIG.agenda.url || "";
   if (!base || /PEGA_AQUI/i.test(base)) return null;
   var u; try { u = new URL(base); } catch(e){ return null; }
   var pr = CONFIG.agenda.params || {};
@@ -638,6 +706,7 @@ function urlAgenda(){
   if (S.tel && pr.telefono) u.searchParams.set(pr.telefono, S.tel);
   u.searchParams.set("sid", sid);
   if (S.perfil) u.searchParams.set("perfil", S.perfil.slug);
+  if (S.ruta) u.searchParams.set("ruta", S.ruta);
   Object.keys(UTM).forEach(function(k){ u.searchParams.set(k, UTM[k]); });
   return u.toString();
 }
@@ -682,8 +751,22 @@ function muestraCTA(){
 function abreCine(){
   detenVideos(inner);   // detiene los testimonios para que no suenen detrás del VSL
   var cont = $("ciCineVideo"); cont.innerHTML = "";
-  if (CONFIG.textos.tituloVideo){ var ti = document.createElement("div"); ti.className = "ci-cine-title"; ti.textContent = tx(CONFIG.textos.tituloVideo).replace(/&amp;/g, "&"); cont.appendChild(ti); }
-  cont.appendChild(media(CONFIG.video, "FALTA EL VIDEO DE VENTAS: configura CONFIG.video"));
+  var R = rutaActual();
+  if (R){
+    // Pantalla personalizada: barra de resultado, mensaje, titular, nota según el freno y VSL de la ruta
+    cont.classList.add("ruta");
+    var pieza = function(clase, html){ if (!html) return; var el = document.createElement("div"); el.className = clase; el.innerHTML = html; cont.appendChild(el); };
+    pieza("ci-cine-chip", txr(R.barra));
+    pieza("ci-cine-msg", txr(porEtapa(R.mensaje)));
+    pieza("ci-cine-sub", txr(R.titular));
+    var nota = (R.notas || {})[S.resp.freno];
+    if (nota) pieza("ci-cine-nota", txr(nota) + (CONFIG.firmaNota ? "<i>" + esc(CONFIG.firmaNota) + "</i>" : ""));
+    var vid = R.video || CONFIG.video; vid.vsl = true;
+    cont.appendChild(media(vid, "FALTA EL VIDEO DE VENTAS de la ruta " + S.ruta + ": configura CONFIG.rutas." + S.ruta + ".video"));
+  } else {
+    if (CONFIG.textos.tituloVideo){ var ti = document.createElement("div"); ti.className = "ci-cine-title"; ti.textContent = tx(CONFIG.textos.tituloVideo).replace(/&amp;/g, "&"); cont.appendChild(ti); }
+    cont.appendChild(media(CONFIG.video, "FALTA EL VIDEO DE VENTAS: configura CONFIG.video"));
+  }
   $("ciCineLegal").textContent = CONFIG.legal || "";
   $("ciCine").hidden = false;
   track("video"); enviar("video_inicio");
@@ -707,7 +790,7 @@ var interactuo = false, ultimo = "carga", salida = false;
 var GHL_EVENTOS = { lead: 1, calificado: 1, no_califica: 1, agenda_click: 1 };
 function datos(evento){
   var d = { evento: evento, sid: sid, fecha: new Date().toISOString(), pagina: location.origin + location.pathname,
-    nombre: S.nombre, email: S.email, telefono: S.tel, indice: S.indice || "", perfil: S.perfil ? S.perfil.slug : "", califica: S.califica };
+    nombre: S.nombre, email: S.email, telefono: S.tel, indice: S.indice || "", perfil: S.perfil ? S.perfil.slug : "", califica: S.califica, ruta: S.ruta || "" };
   P.concat(CAL).forEach(function(q){ d["p_" + q.id] = S.resp[q.id] || ""; });
   Object.keys(UTM).forEach(function(k){ d[k] = UTM[k]; });
   return d;
@@ -752,6 +835,7 @@ async function main(){
     avanza();
   }
   calcula();
+  rutaActual();   // deja la ruta lista para que viaje en todos los eventos desde el lead
   track("lead"); enviar("lead");
 
   await di(tx(CONFIG.textos.analizando));
