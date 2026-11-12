@@ -251,7 +251,7 @@ var CONFIG = {
     pideEmail: "¿Y a qué correo te mando tu diagnóstico completo?",
     analizando: "Dame un momento, estoy revisando tus respuestas…",
     resultadoListo: "Ya está, {nombre}. Este es tu resultado:",
-    antesTestimonio: "Antes de mandarte el video, mira la historia de Pedro 👇",
+    antesTestimonio: "Antes de mandarte el video, mira la historia de {testimonio} 👇",   // {testimonio} = nombre de quien sale en el video
     botonTestimonio: "Listo, ya lo vi. Sigamos",
     antesVideo: [
       "Ahora sí, {nombre}. Te preparé un video según tu diagnóstico.",
@@ -286,8 +286,12 @@ var CONFIG = {
   // TESTIMONIOS (antes del VSL). Solo testimonios reales y con permiso.
   //  tipo: "vturb" | "youtube" | "vimeo" | "mp4" | "imagen".  id = ID del video; src = URL (mp4 o imagen)
   //  Mientras falte el id o el src se ve un recuadro rojo "FALTA TESTIMONIO". Deja la lista vacía [] para saltar este paso.
+  //  Cada ruta tiene su propio testimonio (rutas.A.testimonios / rutas.B.testimonios). Esta lista es el respaldo si no hay ruta.
   testimonios: [
-    { tipo: "youtube", id: "2RHkeWa0ny8", vertical: false, texto: "" }   // Caso de éxito: Pedro
+    { tipo: "vturb", id: "6af603db8e9bfd5d7fbb9b1d", vertical: true, nombre: "Jeimy",
+      texto: "Jeimy era profesional y su sueldo no le alcanzaba. Con sus dos primeros productos facturó entre 30 y 35 millones de pesos." },
+    { tipo: "vturb", id: "6af603e4aafdc81a284cdcbb", vertical: false, nombre: "Luz",
+      texto: "Luz no sabía inglés ni marketing digital. En 2 meses vendió más de 40 millones de pesos, con un margen de más del 50%." }
   ],
 
   // VIDEO DE VENTAS (VSL)
@@ -307,6 +311,8 @@ var CONFIG = {
     A: {   // Empiezas desde cero · VSL 2 (empleados que buscan ingreso extra)
       video: { plataforma: "vturb", id: "6af3b5f98e9bfd5d7fb95a0e" },   // VSL 2 en VTurb (en YouTube: FJ8Py1vWWKs)
       agenda: "",                 // calendario de esta ruta. Vacío = usa agenda.url
+      testimonios: [ { tipo: "vturb", id: "6af603db8e9bfd5d7fbb9b1d", vertical: true, nombre: "Jeimy",
+        texto: "Jeimy era profesional y su sueldo no le alcanzaba. Con sus dos primeros productos facturó entre 30 y 35 millones de pesos." } ],
       barra: "Tu diagnóstico: <b>{perfil}</b> · Índice {indice}/100",
       mensaje: {   // con el índice, a la ruta A también llegan quienes revenden o ya importaron pero tienen poca experiencia vendiendo
         "Nunca he importado": "{nombre}, como apenas estás empezando, este video lo grabé para ti.",
@@ -325,6 +331,8 @@ var CONFIG = {
     B: {   // Ya tienes un negocio · VSL 1 (dueños de negocio)
       video: { plataforma: "vturb", id: "6af3b5f5cc1f366745aa231f" },   // VSL 1 en VTurb (en YouTube: GXaWjo51dKA)
       agenda: "",                 // calendario de esta ruta. Vacío = usa agenda.url
+      testimonios: [ { tipo: "vturb", id: "6af603e4aafdc81a284cdcbb", vertical: false, nombre: "Luz",
+        texto: "Luz no sabía inglés ni marketing digital. En 2 meses vendió más de 40 millones de pesos, con un margen de más del 50%." } ],
       barra: "Tu diagnóstico: <b>{perfil}</b> · Índice {indice}/100",
       mensaje: {
         "Compro aquí y revendo": "{nombre}, ya tienes un negocio y ya sabes vender. Lo que te falta es dejar de entregarle tu margen a otro. Este video es para ti.",
@@ -666,7 +674,7 @@ function media(m, avisoFalta){
     if (!m.id || !CONFIG.vturbCuenta) return falta(avisoFalta + " (falta el ID de VTurb o vturbCuenta)");
     var box = document.createElement("div");
     var el = document.createElement("vturb-smartplayer");
-    el.id = "vid-" + m.id; el.style.cssText = "display:block;margin:0 auto;width:100%;";
+    el.id = "vid-" + m.id; el.style.cssText = "display:block;margin:0 auto;width:100%;" + (m.vertical && !m.vsl ? "max-width:320px;" : "");
     el.innerHTML = '<div class="vturb-player-placeholder" style="position:relative;width:100%;padding:' + (m.vertical ? "177.78%" : "56.25%") + ' 0 0;z-index:0;background-color:black;"></div>';
     box.appendChild(el);
     var s = document.createElement("script"); s.async = true;
@@ -893,10 +901,13 @@ async function main(){
   for (var k = 0; k < P.length; k++){ var o = S.op[P[k].id]; if (o && o.resultado) await di(tx(o.resultado)); }
   if (S.perfil.siguiente) await di(tx(S.perfil.siguiente));
 
-  if (CONFIG.testimonios && CONFIG.testimonios.length){
-    await di(tx(CONFIG.textos.antesTestimonio));
-    for (var t = 0; t < CONFIG.testimonios.length; t++){
-      var te = CONFIG.testimonios[t];
+  var RT = rutaActual(), TES = (RT && RT.testimonios) || CONFIG.testimonios || [];
+  if (TES.length){
+    var nombresT = TES.map(function(x){ return x.nombre; }).filter(Boolean);
+    await di(tx(CONFIG.textos.antesTestimonio).replace(/\{testimonio\}/g,
+      nombresT.length ? nombresT.slice(0, -1).join(", ") + (nombresT.length > 1 ? " y " : "") + nombresT[nombresT.length - 1] : "nuestros alumnos"));
+    for (var t = 0; t < TES.length; t++){
+      var te = TES[t];
       var nodo = media(te, "FALTA TESTIMONIO: pon el video o la imagen en CONFIG.testimonios");
       if (te.texto){ var w = document.createElement("div"); w.appendChild(nodo); var cap = document.createElement("div"); cap.className = "ci-cap"; cap.textContent = te.texto; w.appendChild(cap); nodo = w; }
       fila("doc", nodo, "wide" + (te.vertical ? " vert" : ""));
