@@ -159,6 +159,10 @@
 #ci-funnel .ci-cine-video>.ci-cine-nota{width:calc(100% - 28px);max-width:560px}
 #ci-funnel .ci-cine-nota{background:#fdf3d7;color:#1d2327;font-size:14px;line-height:1.4;padding:10px 12px;border-radius:10px}
 #ci-funnel .ci-cine-nota i{display:block;margin-top:4px;font-style:normal;font-weight:700}
+#ci-funnel .ci-cine-video>.ci-aviso{width:calc(100% - 28px);max-width:560px}
+#ci-funnel .ci-aviso{display:flex;align-items:center;gap:10px;background:var(--ci-a);color:#1d2327;font-weight:800;font-size:16px;line-height:1.25;padding:12px 14px;border-radius:12px}
+#ci-funnel .ci-aviso-flecha{flex:none;font-size:24px;line-height:1;animation:ciBaja 1.2s ease-in-out infinite}
+@keyframes ciBaja{0%,100%{transform:translateY(-3px)}50%{transform:translateY(4px)}}
 #ci-funnel .ci-cine-video>.ci-agenda{width:calc(100% - 20px);max-width:640px}
 #ci-funnel .ci-agenda{background:#fff;border-radius:14px;overflow:hidden;scroll-margin-top:8px}
 #ci-funnel .ci-agenda-tit{background:var(--ci-a);color:#1d2327;font-weight:800;font-size:17px;line-height:1.25;text-align:center;padding:12px 14px}
@@ -356,7 +360,7 @@ var CONFIG = {
   cta: {
     texto: "📅 Elegir día y hora de mi consultoría",   // con la agenda incrustada, este botón baja hasta el calendario
     subtexto: "Sin costo · Cupos limitados",
-    segundos: 240                 // segundos desde que abre el VSL hasta que aparecen el calendario y el botón. -1 = nunca
+    segundos: 300                 // segundos desde que abre el VSL hasta que aparecen el calendario y el botón (300 = 5 min). -1 = nunca
   },
 
   // ===== PARTE 2: CALIFICACIÓN (después del VSL, antes de la agenda) =====
@@ -420,7 +424,9 @@ var CONFIG = {
     url: "https://api.leadconnectorhq.com/widget/booking/GXtL8HZVJDnnh5LPsMnC",   // calendario de pauta en GHL: "Consultoría de admisión Juan Importa". Se usa si la ruta no tiene su propia agenda
     params: { email: "email", nombre: "first_name", telefono: "phone" },   // nombres para precargar datos (estos son los de GHL)
     incrustada: true,             // true = el calendario aparece dentro de la pantalla del VSL (debajo del video); false = el botón lleva al link
-    titulo: "📅 Agenda aquí tu consultoría estratégica (sin costo)"
+    titulo: "📅 Agenda aquí tu consultoría estratégica (sin costo)",
+    aviso: "En 5 minutos podrás agendar tu consultoría de diagnóstico",   // anuncio con flecha debajo de la nota de Juan, mientras llega el calendario. Vacío = sin anuncio
+    avisoListo: "Ya puedes agendar tu consultoría aquí abajo"            // el anuncio cambia a este texto cuando aparece el calendario
   },
   whatsappEquipo: "",             // número con indicativo, sin + ni espacios (ej. 573001234567). Vacío = no se muestra
   textoWhatsapp: "Hola, soy {nombre}. Hice el diagnóstico de importación y me salió {perfil}. Tengo una pregunta.",
@@ -791,6 +797,7 @@ function agendaIncrustada(){
   var calId = (url.match(/booking\/([^/?#]+)/) || [])[1] || "agenda";
   f.id = calId + "_" + Date.now(); f.src = url; f.setAttribute("scrolling", "no"); f.title = "Agenda tu consultoría";
   box.appendChild(f); cont.appendChild(box);
+  var av = cont.querySelector(".ci-aviso-txt"); if (av && CONFIG.agenda.avisoListo) av.textContent = CONFIG.agenda.avisoListo;
   if (!document.querySelector('script[src*="form_embed.js"]')){
     var s = document.createElement("script"); s.src = "https://link.msgsndr.com/js/form_embed.js"; s.async = true; document.body.appendChild(s);
   }
@@ -812,6 +819,9 @@ function abreCine(){
     // La nota de Juan va debajo del video, antes del botón
     var nota = (R.notas || {})[S.resp.freno];
     if (nota) pieza("ci-cine-nota", txr(nota) + (CONFIG.firmaNota ? "<i>" + esc(CONFIG.firmaNota) + "</i>" : ""));
+    // Anuncio con flecha: avisa que el calendario llega en unos minutos
+    if (CONFIG.agenda.incrustada && CONFIG.agenda.aviso && CONFIG.cta.segundos >= 0)
+      pieza("ci-aviso", '<span class="ci-aviso-flecha">⬇️</span><span class="ci-aviso-txt">' + esc(CONFIG.agenda.aviso) + "</span>");
   } else {
     if (CONFIG.textos.tituloVideo){ var ti = document.createElement("div"); ti.className = "ci-cine-title"; ti.textContent = tx(CONFIG.textos.tituloVideo).replace(/&amp;/g, "&"); cont.appendChild(ti); }
     cont.appendChild(media(CONFIG.video, "FALTA EL VIDEO DE VENTAS: configura CONFIG.video"));
