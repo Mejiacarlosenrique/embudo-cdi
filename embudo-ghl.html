@@ -28,10 +28,9 @@
   En Meta, en el anuncio > "Parámetros de URL", pega:
     utm_source=facebook&utm_medium=paid&utm_campaign={{campaign.name}}&utm_term={{adset.name}}&utm_content={{ad.name}}
 
-  GHL (opcional): crea un Workflow con disparador "Inbound Webhook", copia su URL en ghlWebhook,
-  y agrega la acción "Create/Update Contact" mapeando email, nombre y telefono.
-  Eventos que llegan a GHL: "lead" (dejó sus datos), "calificado", "no_califica" y "agenda_click".
-  Cada evento trae el campo "ruta" (A o B). Usa "evento" y "ruta" para poner etiquetas distintas.
+  GHL: el Workflow "DIAGNÓSTICO JUAN IMPORTA → NOTA EN CONTACTO" (disparador "Webhook entrante") recibe el evento
+  "calificado", crea/actualiza el contacto y le deja una nota con capital, etapa y respuestas.
+  Su URL va en ghlWebhook. Los eventos que llegan a GHL se eligen en ghlEventos (cada ejecución del webhook cuesta).
 -->
 <div id="ci-funnel">
   <div class="ci-app">
@@ -413,8 +412,8 @@ var CONFIG = {
 
   // ENVÍO DE DATOS
   sheetsWebhook: "https://script.google.com/macros/s/AKfycbzr4-M8R228_FjaDOITN2h1bYMpNIqypF1ZVfFJX7acrV9TUZ8aKSUOYNj1UljdLIYj/exec",              // URL /exec del Apps Script (ver instrucciones arriba)
-  ghlWebhook: "",                 // URL del Inbound Webhook de tu Workflow en GHL
-  ghlTodosLosEventos: false,      // false = solo manda lead, calificado, no_califica y agenda_click a GHL; Sheets recibe todos los pasos
+  ghlWebhook: "https://services.leadconnectorhq.com/hooks/dJwA5yEBY4n4j4uQQEYQ/webhook-trigger/89b90a65-fc73-4bcb-9166-44751d93c590",   // Webhook entrante del Workflow de notas en GHL
+  ghlEventos: ["calificado"],     // eventos que se mandan a GHL (uno por lead = una nota). Sheets recibe todos los pasos
   pixel: true                     // usa el Pixel de Meta si ya está instalado en la página (fbq)
 };
 /* ========================================================== */
@@ -804,7 +803,7 @@ function track(ev, extra){
 }
 var interactuo = false, ultimo = "carga", salida = false;
 ["pointerdown", "keydown", "touchstart"].forEach(function(e){ addEventListener(e, function(){ interactuo = true; }, { once: true, passive: true }); });
-var GHL_EVENTOS = { lead: 1, calificado: 1, no_califica: 1, agenda_click: 1 };
+var GHL_EVENTOS = {}; (CONFIG.ghlEventos || []).forEach(function(e){ GHL_EVENTOS[e] = 1; });
 function datos(evento){
   var d = { evento: evento, sid: sid, fecha: new Date().toISOString(), pagina: location.origin + location.pathname,
     nombre: S.nombre, email: S.email, telefono: S.tel, indice: S.indice || "", perfil: S.perfil ? S.perfil.slug : "", califica: S.califica, ruta: S.ruta || "" };
@@ -820,7 +819,7 @@ function enviar(evento){
     try { fetch(CONFIG.sheetsWebhook, { method: "POST", credentials: "omit", keepalive: true,
       headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(d) }).catch(function(){}); } catch(e){}
   }
-  if (CONFIG.ghlWebhook && (CONFIG.ghlTodosLosEventos || GHL_EVENTOS[evento])){
+  if (CONFIG.ghlWebhook && GHL_EVENTOS[evento]){
     try { fetch(CONFIG.ghlWebhook, { method: "POST", mode: "no-cors", keepalive: true, body: new URLSearchParams(d) }).catch(function(){}); } catch(e){}
   }
 }
