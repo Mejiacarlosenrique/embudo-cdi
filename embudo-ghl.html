@@ -29,7 +29,7 @@
     utm_source=facebook&utm_medium=paid&utm_campaign={{campaign.name}}&utm_term={{adset.name}}&utm_content={{ad.name}}
 
   GHL: el Workflow "DIAGNÓSTICO JUAN IMPORTA → NOTA EN CONTACTO" (disparador "Webhook entrante") recibe el evento
-  "calificado", crea/actualiza el contacto y le deja una nota con capital, etapa y respuestas.
+  "lead" (cuando deja sus datos), crea/actualiza el contacto y le deja una nota con etapa, respuestas y origen.
   Su URL va en ghlWebhook. Los eventos que llegan a GHL se eligen en ghlEventos (cada ejecución del webhook cuesta).
 -->
 <div id="ci-funnel">
@@ -153,11 +153,15 @@
 #ci-funnel .ci-cine-video>.ci-cine-chip{width:auto;align-self:center}
 #ci-funnel .ci-cine-chip{background:rgba(255,255,255,.12);color:#fff;font-size:12px;line-height:1.3;padding:5px 12px;margin:0 12px;border-radius:999px;text-align:center}
 #ci-funnel .ci-cine-chip b{color:var(--ci-a)}
-#ci-funnel .ci-cine-msg{color:#fff;font-weight:800;font-size:18px;line-height:1.25;text-align:center;padding:0 18px;max-width:640px}
+#ci-funnel .ci-cine-msg{color:#fff;font-weight:800;font-size:24px;line-height:1.2;text-align:center;padding:0 18px;max-width:640px}
 #ci-funnel .ci-cine-sub{color:rgba(255,255,255,.8);font-size:14px;line-height:1.35;text-align:center;padding:0 18px;max-width:640px}
 #ci-funnel .ci-cine-video>.ci-cine-nota{width:calc(100% - 28px);max-width:560px}
 #ci-funnel .ci-cine-nota{background:#fdf3d7;color:#1d2327;font-size:14px;line-height:1.4;padding:10px 12px;border-radius:10px}
 #ci-funnel .ci-cine-nota i{display:block;margin-top:4px;font-style:normal;font-weight:700}
+#ci-funnel .ci-cine-video>.ci-agenda{width:calc(100% - 20px);max-width:640px}
+#ci-funnel .ci-agenda{background:#fff;border-radius:14px;overflow:hidden;scroll-margin-top:8px}
+#ci-funnel .ci-agenda-tit{background:var(--ci-a);color:#1d2327;font-weight:800;font-size:17px;line-height:1.25;text-align:center;padding:12px 14px}
+#ci-funnel .ci-agenda iframe{display:block;width:100%;min-height:720px;border:0;overflow:hidden}
 #ci-funnel .ci-cine-title{color:#fff;font-weight:700;font-size:18px;line-height:1.3;text-align:center;padding:0 18px;max-width:640px}
 #ci-funnel .ci-cine-cta{flex:none;padding:12px 16px 4px;display:flex;flex-direction:column;align-items:center;gap:8px}
 #ci-funnel .ci-cine-cta:empty{display:none}
@@ -187,7 +191,7 @@ var CONFIG = {
 
   // Mensajes de entrada. {n} = número de preguntas, {nombre} = nombre de la persona
   intro: [
-    "Hola 👋 Te escribo desde Juan Importa.",
+    "Hola 👋 Te escribe Juan Importa.",
     "Te voy a hacer {n} preguntas rápidas sobre tu situación.",
     "Con eso te digo qué tan listo estás para importar y cuál es tu mejor siguiente paso. Toma menos de un minuto."
   ],
@@ -341,16 +345,16 @@ var CONFIG = {
 
   // BOTÓN debajo del VSL (lleva a la calificación)
   cta: {
-    texto: "Quiero mi consultoría estratégica",
+    texto: "📅 Elegir día y hora de mi consultoría",   // con la agenda incrustada, este botón baja hasta el calendario
     subtexto: "Sin costo · Cupos limitados",
-    segundos: 0                   // segundo del video en que aparece el botón. -1 = no mostrarlo
+    segundos: 240                 // segundos desde que abre el VSL hasta que aparecen el calendario y el botón. -1 = nunca
   },
 
   // ===== PARTE 2: CALIFICACIÓN (después del VSL, antes de la agenda) =====
   //  tipo: "opciones" | "texto" (respuesta abierta) | "numero"
   //  descalifica: true en una opción = no pasa a la agenda (ve el mensaje de noCalifica)
   calificacion: {
-    activa: true,                 // false = el botón del VSL va directo a la agenda
+    activa: false,                // false = sin preguntas: el calendario va incrustado debajo del VSL (feedback 12-nov: "solo calendario y medir")
     intro: [
       "Buenísimo, {nombre}. Antes de abrirte la agenda necesito conocerte un poco más.",
       "Son {n} preguntas y terminamos."
@@ -405,7 +409,9 @@ var CONFIG = {
   // AGENDA (a donde va quien califica)
   agenda: {
     url: "https://api.leadconnectorhq.com/widget/booking/GXtL8HZVJDnnh5LPsMnC",   // calendario de pauta en GHL: "Consultoría de admisión Juan Importa". Se usa si la ruta no tiene su propia agenda
-    params: { email: "email", nombre: "first_name", telefono: "phone" }   // nombres para precargar datos (estos son los de GHL)
+    params: { email: "email", nombre: "first_name", telefono: "phone" },   // nombres para precargar datos (estos son los de GHL)
+    incrustada: true,             // true = el calendario aparece dentro de la pantalla del VSL (debajo del video); false = el botón lleva al link
+    titulo: "📅 Agenda aquí tu consultoría estratégica (sin costo)"
   },
   whatsappEquipo: "",             // número con indicativo, sin + ni espacios (ej. 573001234567). Vacío = no se muestra
   textoWhatsapp: "Hola, soy {nombre}. Hice el diagnóstico de importación y me salió {perfil}. Tengo una pregunta.",
@@ -413,7 +419,7 @@ var CONFIG = {
   // ENVÍO DE DATOS
   sheetsWebhook: "https://script.google.com/macros/s/AKfycbzr4-M8R228_FjaDOITN2h1bYMpNIqypF1ZVfFJX7acrV9TUZ8aKSUOYNj1UljdLIYj/exec",              // URL /exec del Apps Script (ver instrucciones arriba)
   ghlWebhook: "https://services.leadconnectorhq.com/hooks/dJwA5yEBY4n4j4uQQEYQ/webhook-trigger/89b90a65-fc73-4bcb-9166-44751d93c590",   // Webhook entrante del Workflow de notas en GHL
-  ghlEventos: ["calificado"],     // eventos que se mandan a GHL (uno por lead = una nota). Sheets recibe todos los pasos
+  ghlEventos: ["lead"],           // eventos que se mandan a GHL ("lead" = dejó sus datos → una nota por lead). Sheets recibe todos los pasos
   pixel: true                     // usa el Pixel de Meta si ya está instalado en la página (fbq)
 };
 /* ========================================================== */
@@ -746,6 +752,8 @@ function muestraCTA(){
   var b = document.createElement("button"); b.type = "button"; b.className = "ci-cta"; b.textContent = CONFIG.cta.texto;
   b.onclick = function(){
     track("cta"); enviar("cta_click");
+    var ag = $("ciCineVideo").querySelector(".ci-agenda");
+    if (ag){ ag.scrollIntoView({ behavior: RAPIDO ? "auto" : "smooth", block: "start" }); return; }
     if (CAL.length){ cierraCine(); calificar(); return; }
     var url = urlAgenda();
     if (!url){ b.className = "ci-cta ci-cta-off"; b.textContent = "⚠ Falta poner el link de la agenda (CONFIG.agenda.url)"; return; }
@@ -761,7 +769,23 @@ function muestraCTA(){
     a.onclick = function(){ track("whatsapp"); enviar("whatsapp_click"); };
     zona.appendChild(a);
   }
-  if (PRUEBA) setTimeout(function(){ b.click(); }, 20);
+  if (PRUEBA && !CONFIG.agenda.incrustada) setTimeout(function(){ b.click(); }, 20);
+}
+// Calendario de GHL incrustado debajo del VSL (precarga nombre, correo y WhatsApp)
+function agendaIncrustada(){
+  var cont = $("ciCineVideo");
+  if (cont.querySelector(".ci-agenda")) return;
+  var url = urlAgenda(), box = document.createElement("div"); box.className = "ci-agenda";
+  var t = document.createElement("div"); t.className = "ci-agenda-tit"; t.textContent = CONFIG.agenda.titulo || ""; box.appendChild(t);
+  if (!url){ t.textContent = "⚠ Falta poner el link de la agenda (CONFIG.agenda.url)"; cont.appendChild(box); return; }
+  var f = document.createElement("iframe");
+  var calId = (url.match(/booking\/([^/?#]+)/) || [])[1] || "agenda";
+  f.id = calId + "_" + Date.now(); f.src = url; f.setAttribute("scrolling", "no"); f.title = "Agenda tu consultoría";
+  box.appendChild(f); cont.appendChild(box);
+  if (!document.querySelector('script[src*="form_embed.js"]')){
+    var s = document.createElement("script"); s.src = "https://link.msgsndr.com/js/form_embed.js"; s.async = true; document.body.appendChild(s);
+  }
+  track("agenda"); enviar("agenda_vista");
 }
 function abreCine(){
   detenVideos(inner);   // detiene los testimonios para que no suenen detrás del VSL
@@ -787,7 +811,11 @@ function abreCine(){
   $("ciCine").hidden = false;
   track("video"); enviar("video_inicio");
   var seg = CONFIG.cta.segundos;
-  if (seg >= 0) setTimeout(muestraCTA, (PRUEBA ? 0 : seg) * 1000);
+  if (seg >= 0) setTimeout(function(){
+    if ($("ciCine").hidden) return;
+    if (CONFIG.agenda.incrustada) agendaIncrustada();
+    muestraCTA();
+  }, (RAPIDO ? 3 : seg) * 1000);
 }
 function cierraCine(){ detenVideos($("ciCineVideo")); $("ciCine").hidden = true; scroll(); }
 
