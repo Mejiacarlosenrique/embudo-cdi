@@ -161,6 +161,9 @@
 #ci-funnel .ci-cine-nota i{display:block;margin-top:4px;font-style:normal;font-weight:700}
 #ci-funnel .ci-cine-video>.ci-aviso{width:calc(100% - 28px);max-width:560px}
 #ci-funnel .ci-aviso{display:flex;align-items:center;gap:10px;background:var(--ci-a);color:#1d2327;font-weight:800;font-size:16px;line-height:1.25;padding:12px 14px;border-radius:12px}
+#ci-funnel .ci-aviso-txt{flex:1}
+#ci-funnel .ci-aviso-reloj{flex:none;background:#1d2327;color:#fff;font-variant-numeric:tabular-nums;font-size:17px;padding:6px 9px;border-radius:8px;letter-spacing:.5px}
+#ci-funnel .ci-aviso-reloj:empty{display:none}
 #ci-funnel .ci-aviso-flecha{flex:none;font-size:24px;line-height:1;animation:ciBaja 1.2s ease-in-out infinite}
 @keyframes ciBaja{0%,100%{transform:translateY(-3px)}50%{transform:translateY(4px)}}
 #ci-funnel .ci-cine-video>.ci-agenda{width:calc(100% - 20px);max-width:640px}
@@ -231,7 +234,24 @@ var CONFIG = {
         { t: "No sé cómo vender lo que traiga", pts: 0,
           respuesta: "Buen punto, porque importar es solo la mitad. La otra mitad es vender.",
           resultado: "Te preocupa vender lo que traigas. Por eso la demanda se valida antes de importar, no después." }
-      ] },
+      ],
+      // Quien ya importa no "arranca": a esa persona se le pregunta por su reto actual (feedback 12-nov)
+      variante: { siEtapa: ["Ya importé alguna vez", "Importo con frecuencia"], antes: "",
+        texto: "¿Cuál es tu reto en este momento?",
+        opciones: [
+          { t: "El proceso de importar es complicado", pts: 0,
+            respuesta: "Lo es cuando lo haces sin un sistema. Con método se vuelve un paso a paso.",
+            resultado: "Me dijiste que el proceso de importar se te hace complicado. Se simplifica cuando cada paso tiene un orden y no dependes de adivinar." },
+          { t: "Aduanas, papeles, aranceles", pts: 0,
+            respuesta: "Es donde más tiempo y plata se pierde cuando no está claro.",
+            resultado: "Tu reto son las aduanas, los papeles y los aranceles. Deja de ser una sorpresa cuando conoces el costo real puesto en Colombia antes de comprar." },
+          { t: "Mis márgenes de ganancia", pts: 0,
+            respuesta: "Ese es el punto clave. Vender mucho no sirve si el margen no da.",
+            resultado: "Tu reto es el margen. Se mejora eligiendo mejor el producto, negociando mejor y calculando cada costo antes de comprar." },
+          { t: "El tiempo para importar", pts: 0,
+            respuesta: "Te entiendo. Importar no debería comerse todo tu tiempo.",
+            resultado: "Tu reto es el tiempo. La salida es un sistema y herramientas que hagan el trabajo pesado por ti." }
+        ] } },
     { id: "ventas", antes: "Ahora hablemos de ventas 📈",
       texto: "¿Cuál es tu mayor reto hoy en ventas online?",
       despues: "Clave. Eso también se aprende.",
@@ -267,7 +287,7 @@ var CONFIG = {
   },
 
   // Lista que se va marcando mientras "analiza"
-  analisis: ["Tu etapa actual", "Lo que te frena", "Tu reto en ventas", "Tu perfil de importador"],
+  analisis: ["Tu etapa actual", "Tu reto principal", "Tu reto en ventas", "Tu perfil de importador"],
 
   // Resultado. Se elige el perfil con el "min" más alto que alcance el índice (de 20 a 92)
   //  Con 2 preguntas que suman (etapa 1-4 + ventas 1-3) los índices posibles son 20, 34, 49, 63, 78 y 92:
@@ -329,7 +349,12 @@ var CONFIG = {
         "No sé qué producto traer": "Me dijiste que no sabes qué producto traer. En el video te explico por qué no se importa lo que a ti te gusta, sino lo que el mercado ya está comprando, y cómo nuestra IA te ayuda a encontrarlo antes de invertir.",
         "Miedo a que me estafen": "Me dijiste que te da miedo que te estafen. Johana sentía exactamente lo mismo. En el video te cuento cómo negoció con su proveedor, hizo su primera compra y la vendió, y por qué te damos una garantía por contrato.",
         "Aduanas, aranceles y envíos": "Me dijiste que te frena la parte de aduanas, aranceles y envíos. En el video te muestro cómo calcular el costo real antes de comprar, y por qué vender mucho no sirve si no conoces ese número.",
-        "No sé cómo vender lo que traiga": "Me dijiste que no sabes cómo venderías lo que traigas. Importar es solo la mitad. En el video te muestro el sistema de ventas por internet con el que César hizo $3.000 en su primera campaña."
+        "No sé cómo vender lo que traiga": "Me dijiste que no sabes cómo venderías lo que traigas. Importar es solo la mitad. En el video te muestro el sistema de ventas por internet con el que César hizo $3.000 en su primera campaña.",
+        // Para quien ya importa (pregunta "¿Cuál es tu reto en este momento?")
+        "El proceso de importar es complicado": "Me dijiste que el proceso de importar se te hace complicado. En el video te muestro el paso a paso que seguimos y cómo te acompañamos en cada etapa, para que no dependas de adivinar.",
+        "Aduanas, papeles, aranceles": "Me dijiste que tu reto son las aduanas, los papeles y los aranceles. En el video te muestro cómo calcular el costo real antes de comprar, y por qué vender mucho no sirve si no conoces ese número.",
+        "Mis márgenes de ganancia": "Me dijiste que tu reto son tus márgenes. En el video te explico cómo elegir productos con buen margen usando datos del mercado, no tu gusto personal.",
+        "El tiempo para importar": "Me dijiste que tu reto es el tiempo. En el video te muestro cómo construir este ingreso mientras sigues con tu trabajo, con un sistema que hace el trabajo pesado."
       }
     },
     B: {   // Ya tienes un negocio · VSL 1 (dueños de negocio)
@@ -348,7 +373,12 @@ var CONFIG = {
         "No sé qué producto traer": "Me dijiste que no sabes qué producto traer. Antes tenías que apostarle a la suerte; en el video te muestro cómo nuestra IA te dice qué productos tienen más potencial antes de que inviertas un solo peso.",
         "Miedo a que me estafen": "Me dijiste que te da miedo que te estafen. Johana también tenía miedo de mandar dinero a China. En el video te cuento cómo hizo su primera importación y por qué la garantizamos por contrato.",
         "Aduanas, aranceles y envíos": "Me dijiste que te frena la parte de aduanas, aranceles y envíos. En el video te muestro cómo saber exactamente cuánto te cuesta traer cada producto y dónde está tu importación en todo momento.",
-        "No sé cómo vender lo que traiga": "Me dijiste que no sabes cómo venderías lo que traigas. En el video te muestro cómo vender por internet sin depender del tráfico de tu local ni de que tú estés presente."
+        "No sé cómo vender lo que traiga": "Me dijiste que no sabes cómo venderías lo que traigas. En el video te muestro cómo vender por internet sin depender del tráfico de tu local ni de que tú estés presente.",
+        // Para quien ya importa (pregunta "¿Cuál es tu reto en este momento?")
+        "El proceso de importar es complicado": "Me dijiste que el proceso de importar se te hace complicado. En el video te muestro ImporTools, la herramienta que centraliza toda tu importación para que tomes decisiones con números reales.",
+        "Aduanas, papeles, aranceles": "Me dijiste que tu reto son las aduanas, los papeles y los aranceles. En el video te muestro cómo saber exactamente cuánto te cuesta traer cada producto y dónde está tu importación en todo momento.",
+        "Mis márgenes de ganancia": "Me dijiste que tu reto son tus márgenes. En el video te muestro cómo pasar a tener tu propio producto con más margen, y cómo nuestra IA te dice qué productos tienen más potencial antes de invertir.",
+        "El tiempo para importar": "Me dijiste que tu reto es el tiempo. En el video te muestro cómo montar un sistema que venda por internet aunque tú no estés presente."
       }
     }
   },
@@ -590,6 +620,10 @@ function pideDato(tipo, ph){
 
 // Hace una pregunta de cualquier tipo y guarda la respuesta. Devuelve la opción elegida (o el texto)
 async function pregunta(q){
+  var vq = q.variante;
+  if (vq && (vq.siEtapa || []).indexOf(S.resp.etapa) >= 0){
+    q = Object.assign({}, q, vq); delete q.variante;
+  }
   await diVarios(q.antes);
   await di(tx(q.texto));
   var r;
@@ -821,7 +855,7 @@ function abreCine(){
     if (nota) pieza("ci-cine-nota", txr(nota) + (CONFIG.firmaNota ? "<i>" + esc(CONFIG.firmaNota) + "</i>" : ""));
     // Anuncio con flecha: avisa que el calendario llega en unos minutos
     if (CONFIG.agenda.incrustada && CONFIG.agenda.aviso && CONFIG.cta.segundos >= 0)
-      pieza("ci-aviso", '<span class="ci-aviso-flecha">⬇️</span><span class="ci-aviso-txt">' + esc(CONFIG.agenda.aviso) + "</span>");
+      pieza("ci-aviso", '<span class="ci-aviso-flecha">⬇️</span><span class="ci-aviso-txt">' + esc(CONFIG.agenda.aviso) + '</span><span class="ci-aviso-reloj"></span>');
   } else {
     if (CONFIG.textos.tituloVideo){ var ti = document.createElement("div"); ti.className = "ci-cine-title"; ti.textContent = tx(CONFIG.textos.tituloVideo).replace(/&amp;/g, "&"); cont.appendChild(ti); }
     cont.appendChild(media(CONFIG.video, "FALTA EL VIDEO DE VENTAS: configura CONFIG.video"));
@@ -830,11 +864,24 @@ function abreCine(){
   $("ciCine").hidden = false;
   track("video"); enviar("video_inicio");
   var seg = CONFIG.cta.segundos;
-  if (seg >= 0) setTimeout(function(){
-    if ($("ciCine").hidden) return;
-    if (CONFIG.agenda.incrustada) agendaIncrustada();
-    muestraCTA();
-  }, (RAPIDO ? 3 : seg) * 1000);
+  if (seg >= 0){
+    var total = (RAPIDO ? 3 : seg) * 1000, fin = Date.now() + total;
+    // Reloj del anuncio: cuenta regresiva hasta que aparece el calendario
+    var reloj = cont.querySelector(".ci-aviso-reloj");
+    var tic = function(){
+      if (!reloj) return;
+      var r = Math.max(0, Math.ceil((fin - Date.now()) / 1000));
+      reloj.textContent = r > 0 ? "⏱ " + Math.floor(r / 60) + ":" + ("0" + (r % 60)).slice(-2) : "";
+      if (r > 0) setTimeout(tic, 250);
+    };
+    tic();
+    setTimeout(function(){
+      if ($("ciCine").hidden) return;
+      if (reloj) reloj.textContent = "";
+      if (CONFIG.agenda.incrustada) agendaIncrustada();
+      muestraCTA();
+    }, total);
+  }
 }
 function cierraCine(){ detenVideos($("ciCineVideo")); $("ciCine").hidden = true; scroll(); }
 
