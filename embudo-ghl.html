@@ -165,6 +165,9 @@
 #ci-funnel .ci-aviso-reloj:empty{display:none}
 #ci-funnel .ci-aviso-flecha{flex:none;font-size:24px;line-height:1;animation:ciBaja 1.2s ease-in-out infinite}
 @keyframes ciBaja{0%,100%{transform:translateY(-3px)}50%{transform:translateY(4px)}}
+#ci-funnel .ci-cine-video>.ci-nocal{width:calc(100% - 28px);max-width:560px}
+#ci-funnel .ci-nocal{background:#fff;color:#1d2327;border-radius:12px;padding:14px;font-size:15px;line-height:1.4}
+#ci-funnel .ci-nocal p{margin:0 0 8px}
 #ci-funnel .ci-cine-video>.ci-agenda{width:calc(100% - 20px);max-width:640px}
 #ci-funnel .ci-agenda{background:#fff;border-radius:14px;overflow:hidden;scroll-margin-top:8px}
 #ci-funnel .ci-agenda-tit{background:var(--ci-a);color:#1d2327;font-weight:800;font-size:17px;line-height:1.25;text-align:center;padding:12px 14px}
@@ -259,6 +262,14 @@ var CONFIG = {
         { t: "Crear una tienda online", pts: 2 },
         { t: "Vender por redes sociales", pts: 3 },
         { t: "No tengo experiencia vendiendo", pts: 1 }
+      ] },
+    // Capital (regla 17-nov): con menos de USD 1.000 no se le abre la agenda. pts 0 = no cambia el índice
+    { id: "capital", antes: "Última pregunta 👇",
+      texto: "Para recomendarte la ruta correcta, ¿con qué capital cuentas hoy para invertir en tu importación?",
+      opciones: [
+        { t: "✅ Tengo USD 1.500 o más para invertir", pts: 0, respuesta: "Perfecto. Con eso hay varias rutas posibles." },
+        { t: "⚡ Tengo entre USD 1.000 y 1.499", pts: 0, respuesta: "Bien. Es un buen punto de partida si se invierte con método." },
+        { t: "🔄 Tengo menos de USD 1.000 ahora", pts: 0, descalifica: true, respuesta: "Gracias por la sinceridad. Con eso te digo cuál es tu mejor siguiente paso." }
       ] },
   ],
 
@@ -455,7 +466,14 @@ var CONFIG = {
     incrustada: true,             // true = el calendario aparece dentro de la pantalla del VSL (debajo del video); false = el botón lleva al link
     titulo: "📅 Agenda aquí tu consultoría estratégica (sin costo)",
     aviso: "En 5 minutos podrás agendar tu consultoría de diagnóstico",   // anuncio con flecha debajo de la nota de Juan, mientras llega el calendario. Vacío = sin anuncio
-    avisoListo: "Ya puedes agendar tu consultoría aquí abajo"            // el anuncio cambia a este texto cuando aparece el calendario
+    avisoListo: "Ya puedes agendar tu consultoría aquí abajo",           // el anuncio cambia a este texto cuando aparece el calendario
+    // Con menos de USD 1.000 (pregunta "capital") no se abre la agenda: a los 5 minutos ve esto en lugar del calendario
+    noCalifica: [
+      "{nombre}, para acceder al programa se necesita una inversión inicial desde USD 1.000, así que por ahora no te puedo abrir la agenda.",
+      "Mientras tanto, en nuestro canal de YouTube tienes contenido gratuito para dar tus primeros pasos importando desde China."
+    ],
+    botonNoCalifica: "▶️ Ver el canal de YouTube",
+    urlNoCalifica: "https://www.youtube.com/@Juanimporta"
   },
   whatsappEquipo: "",             // número con indicativo, sin + ni espacios (ej. 573001234567). Vacío = no se muestra
   textoWhatsapp: "Hola, soy {nombre}. Hice el diagnóstico de importación y me salió {perfil}. Tengo una pregunta.",
@@ -635,7 +653,7 @@ async function pregunta(q){
     S.resp[q.id] = r.t; S.op[q.id] = r; S.pts += r.pts || 0;
   }
   avanza(); track("pregunta", { pregunta: q.id }); enviar("p_" + q.id);
-  if (r.descalifica) return r;
+  if (r.descalifica && !r.respuesta) return r;
   if (r.respuesta) await di(tx(r.respuesta));
   else if (q.despues) await diVarios(q.despues);
   return r;
@@ -819,6 +837,20 @@ function muestraCTA(){
   }
   if (PRUEBA && !CONFIG.agenda.incrustada) setTimeout(function(){ b.click(); }, 20);
 }
+// Quien tiene menos de USD 1.000: sin agenda, con un camino gratuito (YouTube)
+function noCalificaCine(){
+  var cont = $("ciCineVideo"), A = CONFIG.agenda;
+  if (cont.querySelector(".ci-nocal")) return;
+  var box = document.createElement("div"); box.className = "ci-nocal";
+  lista(A.noCalifica).forEach(function(t){ var p = document.createElement("p"); p.innerHTML = tx(t); box.appendChild(p); });
+  cont.appendChild(box);
+  var zona = $("ciCineCta"); zona.innerHTML = "";
+  var a = document.createElement("a"); a.className = "ci-cta"; a.href = A.urlNoCalifica; a.target = "_blank"; a.rel = "noopener";
+  a.textContent = A.botonNoCalifica;
+  a.onclick = function(){ enviar("youtube_click"); };
+  zona.appendChild(a);
+  enviar("no_califica_vista");
+}
 // Calendario de GHL incrustado debajo del VSL (precarga nombre, correo y WhatsApp)
 function agendaIncrustada(){
   var cont = $("ciCineVideo");
@@ -853,7 +885,7 @@ function abreCine(){
     var nota = (R.notas || {})[S.resp.freno];
     if (nota) pieza("ci-cine-nota", txr(nota) + (CONFIG.firmaNota ? "<i>" + esc(CONFIG.firmaNota) + "</i>" : ""));
     // Anuncio con flecha: avisa que el calendario llega en unos minutos
-    if (CONFIG.agenda.incrustada && CONFIG.agenda.aviso && CONFIG.cta.segundos >= 0)
+    if (CONFIG.agenda.incrustada && CONFIG.agenda.aviso && CONFIG.cta.segundos >= 0 && S.califica !== "no")
       pieza("ci-aviso", '<span class="ci-aviso-flecha">⬇️</span><span class="ci-aviso-txt">' + esc(CONFIG.agenda.aviso) + '</span><span class="ci-aviso-reloj"></span>');
   } else {
     if (CONFIG.textos.tituloVideo){ var ti = document.createElement("div"); ti.className = "ci-cine-title"; ti.textContent = tx(CONFIG.textos.tituloVideo).replace(/&amp;/g, "&"); cont.appendChild(ti); }
@@ -877,6 +909,7 @@ function abreCine(){
     setTimeout(function(){
       if ($("ciCine").hidden) return;
       if (reloj) reloj.textContent = "";
+      if (S.califica === "no"){ noCalificaCine(); return; }
       if (CONFIG.agenda.incrustada) agendaIncrustada();
       muestraCTA();
     }, total);
@@ -944,6 +977,7 @@ async function main(){
     avanza();
   }
   calcula();
+  var oCap = S.op.capital; if (oCap) S.califica = oCap.descalifica ? "no" : "si";
   rutaActual();   // deja la ruta lista para que viaje en todos los eventos desde el lead
   track("lead"); enviar("lead");
 
