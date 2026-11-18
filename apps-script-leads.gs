@@ -11,6 +11,9 @@
  *     Ejecutar como: "Yo". Quién tiene acceso: "Cualquier persona". Implementar y autorizar.
  *  3. Copia la URL que termina en /exec y pégala en CONFIG.sheetsWebhook del embudo.
  *  Si cambias este código, usa Implementar > Gestionar implementaciones > editar > "Nueva versión" (así la URL no cambia).
+ *
+ * CITAS (columna "agendo"): el workflow de GHL "AGENDADOS JUAN IMPORTA (ADMISIÓN) → PIPELINE PAUTA" manda un
+ * Webhook a esta misma URL cuando alguien reserva. Se busca el lead por correo (o WhatsApp) y se marca agendo = si.
  */
 
 var COLUMNAS_LEADS = [
@@ -20,7 +23,8 @@ var COLUMNAS_LEADS = [
   "p_etapa", "p_freno", "p_ventas",
   "p_motivacion", "p_capital", "p_capital_exacto", "p_decision", "p_compromiso",
   "utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term",
-  "fbclid", "gclid", "src", "sck", "pagina", "sid"
+  "fbclid", "gclid", "src", "sck", "pagina", "sid",
+  "agendo", "fecha_cita"
 ];
 var COLUMNAS_EVENTOS = ["fecha", "evento", "sid", "nombre", "ruta", "utm_source", "utm_campaign", "utm_content"];
 
@@ -33,7 +37,7 @@ function doPost(e) {
   var lock = LockService.getScriptLock();
   lock.waitLock(20000);
   try {
-    var d = JSON.parse(e.postData.contents);
+    var d = deGhl_(JSON.parse(e.postData.contents));   // si viene del Webhook de GHL (cita), lo convierte
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var ahora = new Date();
 
@@ -46,6 +50,12 @@ function doPost(e) {
     var le = hoja_(ss, "Leads", COLUMNAS_LEADS);
     var cab = cabecera_(le, d);   // si el embudo manda un campo nuevo, se agrega como columna al final
     var fila = buscaSid_(le, cab, d.sid);
+    if (d.evento === "agendo"){
+      // La cita llega desde GHL (sin sid): se busca por correo o WhatsApp. Si no está en la hoja, solo queda en "Eventos"
+      fila = buscaContacto_(le, cab, d.email, d.telefono);
+      if (!fila) return ok_();
+      delete d.email; delete d.telefono;   // no se cambian los datos que dejó en el embudo
+    }
     var tieneContacto = d.telefono || d.email;
     if (!fila && !tieneContacto) return ok_();   // aún no deja sus datos: solo queda en "Eventos"
 
@@ -106,6 +116,35 @@ function buscaSid_(sh, cab, sid) {
   var col = cab.indexOf("sid") + 1;
   var f = sh.getRange(2, col, sh.getLastRow() - 1, 1).createTextFinder(String(sid)).matchEntireCell(true).findNext();
   return f ? f.getRow() : 0;
+}
+
+// Busca la fila del lead por correo y, si no, por los últimos 10 dígitos del WhatsApp (el más reciente primero)
+function buscaContacto_(sh, cab, email, tel) {
+  if (sh.getLastRow() < 2) return 0;
+  var datos = sh.getRange(2, 1, sh.getLastRow() - 1, cab.length).getValues();
+  var ie = cab.indexOf("email"), it = cab.indexOf("telefono");
+  var em = String(email || "").trim().toLowerCase(), dig = String(tel || "").replace(/\D/g, "").slice(-10);
+  var i;
+  if (em && ie >= 0) for (i = datos.length - 1; i >= 0; i--) {
+    if (String(datos[i][ie]).trim().toLowerCase() === em) return i + 2;
+  }
+  if (dig.length >= 7 && it >= 0) for (i = datos.length - 1; i >= 0; i--) {
+    if (String(datos[i][it]).replace(/\D/g, "").slice(-10) === dig) return i + 2;
+  }
+  return 0;
+}
+
+// El Webhook de GHL manda los datos del contacto + "customData" (lo que se configura en la acción) + "calendar" (la cita)
+function deGhl_(d) {
+  if (!d || !(d.customData || d.contact_id || d.calendar)) return d;
+  var c = d.customData || {}, cal = d.calendar || {};
+  return {
+    evento: c.evento || "agendo",
+    email: c.email || d.email || "",
+    telefono: c.telefono || d.phone || "",
+    agendo: "si",
+    fecha_cita: c.fecha_cita || cal.startTime || cal.start_time || ""
+  };
 }
 
 function ok_() { return ContentService.createTextOutput("ok"); }
