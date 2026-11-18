@@ -263,14 +263,6 @@ var CONFIG = {
         { t: "Vender por redes sociales", pts: 3 },
         { t: "No tengo experiencia vendiendo", pts: 1 }
       ] },
-    // Capital (regla 17-nov): con menos de USD 1.000 no se le abre la agenda. pts 0 = no cambia el índice
-    { id: "capital", antes: "Última pregunta 👇",
-      texto: "Para recomendarte la ruta correcta, ¿con qué capital cuentas hoy para invertir en tu importación?",
-      opciones: [
-        { t: "✅ Tengo USD 1.500 o más para invertir", pts: 0, respuesta: "Perfecto. Con eso hay varias rutas posibles." },
-        { t: "⚡ Tengo entre USD 1.000 y 1.499", pts: 0, respuesta: "Bien. Es un buen punto de partida si se invierte con método." },
-        { t: "🔄 Tengo menos de USD 1.000 ahora", pts: 0, descalifica: true, respuesta: "Gracias por la sinceridad. Con eso te digo cuál es tu mejor siguiente paso." }
-      ] },
   ],
 
   // Datos de contacto (en este orden: nombre, WhatsApp, correo)
@@ -467,7 +459,7 @@ var CONFIG = {
     titulo: "📅 Agenda aquí tu consultoría estratégica (sin costo)",
     aviso: "En 5 minutos podrás agendar tu consultoría de diagnóstico",   // anuncio con flecha debajo de la nota de Juan, mientras llega el calendario. Vacío = sin anuncio
     avisoListo: "Ya puedes agendar tu consultoría aquí abajo",           // el anuncio cambia a este texto cuando aparece el calendario
-    // Con menos de USD 1.000 (pregunta "capital") no se abre la agenda: a los 5 minutos ve esto en lugar del calendario
+    // (Sin uso desde 18-nov: ya no hay pregunta de capital y todos pueden agendar a los 5 minutos)
     noCalifica: [
       "{nombre}, para acceder al programa se necesita una inversión inicial desde USD 1.000, así que por ahora no te puedo abrir la agenda.",
       "Mientras tanto, en nuestro canal de YouTube tienes contenido gratuito para dar tus primeros pasos importando desde China."
@@ -977,7 +969,6 @@ async function main(){
     avanza();
   }
   calcula();
-  var oCap = S.op.capital; if (oCap) S.califica = oCap.descalifica ? "no" : "si";
   rutaActual();   // deja la ruta lista para que viaje en todos los eventos desde el lead
   track("lead"); enviar("lead");
 
