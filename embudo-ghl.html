@@ -333,6 +333,10 @@ var CONFIG = {
   rutaPorIndice: [ { hasta: 49, ruta: "A" }, { hasta: 100, ruta: "B" } ],
   rutaPorEtapa: { "Nunca he importado": "A", "Compro aquí y revendo": "B", "Ya importé alguna vez": "B", "Importo con frecuencia": "B" },
   firmaNota: "— Juan",
+  // VSL único (20-nov): todos ven el VSL de esta ruta, con su titular y sus notas, sin importar el puntaje.
+  //  "B" = VSL 1 (puntaje mayor). Vacío ("") = cada ruta ve su propio VSL.
+  //  El mensaje de arriba, la barra y el testimonio siguen siendo los de la ruta de cada persona.
+  vslUnico: "B",
   rutas: {
     A: {   // Empiezas desde cero · VSL 2 (empleados que buscan ingreso extra)
       video: { plataforma: "vturb", id: "6af3b5f98e9bfd5d7fb95a0e" },   // VSL 2 en VTurb (en YouTube: FJ8Py1vWWKs)
@@ -870,11 +874,12 @@ function abreCine(){
     var pieza = function(clase, html){ if (!html) return; var el = document.createElement("div"); el.className = clase; el.innerHTML = html; cont.appendChild(el); };
     pieza("ci-cine-chip", txr(R.barra));
     pieza("ci-cine-msg", txr(porEtapa(R.mensaje)));
-    pieza("ci-cine-sub", txr(R.titular));
-    var vid = R.video || CONFIG.video; vid.vsl = true;
+    var V = (CONFIG.vslUnico && CONFIG.rutas[CONFIG.vslUnico]) || R;   // ruta cuyo VSL se muestra (ver CONFIG.vslUnico)
+    pieza("ci-cine-sub", txr(V.titular));
+    var vid = V.video || CONFIG.video; vid.vsl = true;
     cont.appendChild(media(vid, "FALTA EL VIDEO DE VENTAS de la ruta " + S.ruta + ": configura CONFIG.rutas." + S.ruta + ".video"));
-    // La nota de Juan va debajo del video, antes del botón
-    var nota = (R.notas || {})[S.resp.freno];
+    // La nota de Juan va debajo del video, antes del botón (habla del contenido del VSL que se muestra)
+    var nota = (V.notas || {})[S.resp.freno];
     if (nota) pieza("ci-cine-nota", txr(nota) + (CONFIG.firmaNota ? "<i>" + esc(CONFIG.firmaNota) + "</i>" : ""));
     // Anuncio con flecha: avisa que el calendario llega en unos minutos
     if (CONFIG.agenda.incrustada && CONFIG.agenda.aviso && CONFIG.cta.segundos >= 0 && S.califica !== "no")
